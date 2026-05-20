@@ -19,7 +19,7 @@ const modules = [
 ]
 
 export default function Sidebar() {
-  const { activeModule, setActiveModule, voiceEnabled, setVoiceEnabled, connected } = useCityStore()
+  const { activeModule, setActiveModule, voiceEnabled, setVoiceEnabled, connected, snapshot } = useCityStore()
   const { role, fullName, email, refreshToken, clearSession } = useAuthStore()
 
   const handleLogout = async () => {
@@ -43,7 +43,7 @@ export default function Sidebar() {
       </div>
       <div className={`text-xs mb-4 flex items-center gap-2 ${connected ? 'text-emerald-400' : 'text-amber-400'}`}>
         <span className={`w-2 h-2 rounded-full ${connected ? 'bg-emerald-400 animate-pulse' : 'bg-amber-400'}`} />
-        {connected ? 'LIVE SYNC' : 'CONNECTING...'}
+        {connected ? (snapshot ? 'LIVE SYNC' : 'SYNCING...') : 'OFFLINE'}
       </div>
       <nav className="flex-1 space-y-1">
         {modules.map(({ id, label, icon: Icon }) => (
