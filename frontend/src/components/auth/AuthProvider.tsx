@@ -4,7 +4,7 @@ import { fetchCurrentUser } from '../../api/auth'
 import { useAuthStore } from '../../store/useAuthStore'
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const { accessToken, username, clearSession } = useAuthStore()
+  const { accessToken, username, clearSession, isAuthenticated } = useAuthStore()
   const [checking, setChecking] = useState(!!accessToken && !username)
 
   useEffect(() => {
