@@ -1,0 +1,45 @@
+{
+  "database": "nexus_analytics",
+  "collections": {
+    "telemetry_stream": {
+      "indexes": ["timestamp", "sensor_id", "zone_id"],
+      "schema": {
+        "sensor_id": "string",
+        "zone_id": "string",
+        "type": "string",
+        "payload": "object",
+        "timestamp": "datetime"
+      }
+    },
+    "cv_detections": {
+      "indexes": ["camera_id", "timestamp"],
+      "schema": {
+        "camera_id": "string",
+        "detections": "array",
+        "model": "string",
+        "inference_ms": "number",
+        "timestamp": "datetime"
+      }
+    },
+    "ai_reports": {
+      "indexes": ["report_type", "generated_at"],
+      "schema": {
+        "report_type": "string",
+        "summary": "string",
+        "sections": "array",
+        "generated_at": "datetime",
+        "generated_by": "string"
+      }
+    },
+    "drone_missions": {
+      "indexes": ["drone_id", "status"],
+      "schema": {
+        "drone_id": "string",
+        "mission_type": "string",
+        "path": "array",
+        "status": "string",
+        "started_at": "datetime"
+      }
+    }
+  }
+}

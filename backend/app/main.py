@@ -1,0 +1,57 @@
+from contextlib import asynccontextmanager
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.core.config import get_settings
+from app.api.routes import auth, city, traffic, crowd, environment, emergency, drone, ai, websocket
+
+settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+
+
+app = FastAPI(
+    title=settings.APP_NAME,
+    description="Enterprise AI-powered Digital Twin Smart City Platform",
+    version="1.0.0",
+    lifespan=lifespan,
+    docs_url="/api/docs",
+    redoc_url="/api/redoc",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.CORS_ORIGINS + ["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+prefix = settings.API_V1_PREFIX
+app.include_router(auth.router, prefix=prefix)
+app.include_router(city.router, prefix=prefix)
+app.include_router(traffic.router, prefix=prefix)
+app.include_router(crowd.router, prefix=prefix)
+app.include_router(environment.router, prefix=prefix)
+app.include_router(emergency.router, prefix=prefix)
+app.include_router(drone.router, prefix=prefix)
+app.include_router(ai.router, prefix=prefix)
+app.include_router(websocket.router, prefix=prefix)
+
+
+@app.get("/")
+async def root():
+    return {
+        "platform": settings.APP_NAME,
+        "status": "online",
+        "docs": "/api/docs",
+        "websocket": f"{prefix}/ws/live",
+    }
+
+
+@app.get("/health")
+async def health():
+    return {"status": "healthy", "service": "nexus-backend"}
