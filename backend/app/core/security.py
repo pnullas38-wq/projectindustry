@@ -9,7 +9,9 @@ from pydantic import BaseModel
 from app.core.config import get_settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
+oauth2_scheme = OAuth2PasswordBearer(
+    tokenUrl=f"{get_settings().API_V1_PREFIX}/auth/login"
+)
 
 
 class TokenData(BaseModel):

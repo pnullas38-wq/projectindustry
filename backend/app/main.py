@@ -18,8 +18,8 @@ app = FastAPI(
     description="Enterprise AI-powered Digital Twin Smart City Platform",
     version="1.0.0",
     lifespan=lifespan,
-    docs_url="/api/docs",
-    redoc_url="/api/redoc",
+    docs_url=settings.route("/api/docs"),
+    redoc_url=settings.route("/api/redoc"),
 )
 
 app.add_middleware(
@@ -42,16 +42,16 @@ app.include_router(ai.router, prefix=prefix)
 app.include_router(websocket.router, prefix=prefix)
 
 
-@app.get("/")
+@app.get(settings.route("/"))
 async def root():
     return {
         "platform": settings.APP_NAME,
         "status": "online",
-        "docs": "/api/docs",
+        "docs": settings.route("/api/docs"),
         "websocket": f"{prefix}/ws/live",
     }
 
 
-@app.get("/health")
+@app.get(settings.route("/health"))
 async def health():
     return {"status": "healthy", "service": "nexus-backend"}

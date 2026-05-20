@@ -67,7 +67,28 @@ Open http://localhost:5173
 | operator | ops123 | operator |
 | analyst | ai123 | analyst |
 
-### Docker (Full Stack)
+### Deploy on Vercel (Multi-Service)
+
+This project uses [Vercel Services](https://vercel.com/docs/services) with `vercel.json`:
+
+| Service | Path | Framework |
+|---------|------|-----------|
+| `frontend` | `/` | Vite |
+| `backend` | `/_/backend` | FastAPI |
+
+1. Import the repo in [Vercel](https://vercel.com/new).
+2. Set the project **Framework Preset** to **Services**.
+3. Deploy — `vercel.json` routes the Vite app and FastAPI API on one domain.
+
+**Local (all services):**
+
+```bash
+vercel dev -L
+```
+
+**Note:** WebSocket live streams may be limited on serverless; REST APIs work at `/_/backend/api/v1`.
+
+## Docker (Full Stack)
 
 ```bash
 cd docker
@@ -124,5 +145,3 @@ Enable voice in the sidebar, then say: *traffic*, *emergency*, *environment*, *d
 ## License
 
 MIT — Built for academic & enterprise smart city demonstrations.
-
-# projectindustry

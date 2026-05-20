@@ -4,6 +4,8 @@ from functools import lru_cache
 
 class Settings(BaseSettings):
     APP_NAME: str = "NEXUS Digital Twin Smart City Platform"
+    # Vercel Services mount backend at BACKEND_ROUTE_PREFIX (e.g. /_/backend)
+    BACKEND_ROUTE_PREFIX: str = ""
     API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str = "nexus-smart-city-secret-change-in-production"
     ALGORITHM: str = "HS256"
@@ -29,6 +31,11 @@ class Settings(BaseSettings):
 
     class Config:
         env_file = ".env"
+
+    def route(self, path: str) -> str:
+        """Prefix paths for Vercel service routing (e.g. /_/backend/health)."""
+        prefix = self.BACKEND_ROUTE_PREFIX.rstrip("/")
+        return f"{prefix}{path}" if prefix else path
 
 
 @lru_cache

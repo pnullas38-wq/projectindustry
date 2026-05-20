@@ -2,7 +2,14 @@ import { useEffect, useRef } from 'react'
 import { useCityStore } from '../store/useCityStore'
 import type { CitySnapshot } from '../types/city'
 
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/api/v1/ws/live'
+function resolveWsUrl(): string {
+  if (import.meta.env.VITE_WS_URL) return import.meta.env.VITE_WS_URL
+  if (import.meta.env.PROD) {
+    const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+    return `${proto}//${window.location.host}/_/backend/api/v1/ws/live`
+  }
+  return 'ws://localhost:8000/api/v1/ws/live'
+}
 
 export function useWebSocket(enabled: boolean) {
   const wsRef = useRef<WebSocket | null>(null)
@@ -12,7 +19,7 @@ export function useWebSocket(enabled: boolean) {
     if (!enabled) return
 
     const connect = () => {
-      const ws = new WebSocket(WS_URL)
+      const ws = new WebSocket(resolveWsUrl())
       wsRef.current = ws
 
       ws.onopen = () => setConnected(true)
