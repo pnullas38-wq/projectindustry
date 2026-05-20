@@ -3,6 +3,7 @@ import {
   LayoutDashboard, Car, Users, Cloud, AlertTriangle,
   Plane, Brain, Box, LogOut, Mic,
 } from 'lucide-react'
+import { logoutUser } from '../../api/auth'
 import { useAuthStore } from '../../store/useAuthStore'
 import { useCityStore } from '../../store/useCityStore'
 
@@ -19,13 +20,25 @@ const modules = [
 
 export default function Sidebar() {
   const { activeModule, setActiveModule, voiceEnabled, setVoiceEnabled, connected } = useCityStore()
-  const { role, fullName, logout } = useAuthStore()
+  const { role, fullName, email, refreshToken, clearSession } = useAuthStore()
+
+  const handleLogout = async () => {
+    if (refreshToken) {
+      try {
+        await logoutUser(refreshToken)
+      } catch {
+        /* clear local session even if server logout fails */
+      }
+    }
+    clearSession()
+  }
 
   return (
     <aside className="w-56 glass-panel m-3 p-4 flex flex-col shrink-0">
       <div className="mb-6">
         <h2 className="hud-text text-lg text-nexus-glow">NEXUS</h2>
         <p className="text-xs text-slate-500 truncate">{fullName}</p>
+        <p className="text-[10px] text-slate-600 truncate">{email}</p>
         <span className="text-[10px] uppercase text-nexus-cyan">{role}</span>
       </div>
       <div className={`text-xs mb-4 flex items-center gap-2 ${connected ? 'text-emerald-400' : 'text-amber-400'}`}>
@@ -57,7 +70,7 @@ export default function Sidebar() {
         <Mic className="w-4 h-4" />
         Voice {voiceEnabled ? 'ON' : 'OFF'}
       </button>
-      <button onClick={logout} className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-red-400 text-sm">
+      <button onClick={handleLogout} className="flex items-center gap-2 px-3 py-2 text-slate-500 hover:text-red-400 text-sm">
         <LogOut className="w-4 h-4" /> Logout
       </button>
     </aside>

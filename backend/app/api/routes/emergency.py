@@ -1,18 +1,19 @@
 from fastapi import APIRouter, Depends
-from app.core.security import get_current_user, UserInDB
+from app.core.security import get_current_user
+from app.models.user import User
 from app.services.city_simulator import simulator
 
 router = APIRouter(prefix="/emergency", tags=["Emergency Response AI"])
 
 
 @router.get("/active")
-async def active_emergencies(_: UserInDB = Depends(get_current_user)):
+async def active_emergencies(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return {"emergencies": snap["emergencies"], "count": len(snap["emergencies"])}
 
 
 @router.get("/hotspots")
-async def emergency_hotspots(_: UserInDB = Depends(get_current_user)):
+async def emergency_hotspots(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return {
         "hotspots": [
@@ -23,7 +24,7 @@ async def emergency_hotspots(_: UserInDB = Depends(get_current_user)):
 
 
 @router.get("/predictions")
-async def disaster_prediction(_: UserInDB = Depends(get_current_user)):
+async def disaster_prediction(_: User = Depends(get_current_user)):
     return {
         "predictions": [
             {"type": "flood_risk", "zone": "harbor", "probability": 0.23, "window_hours": 48},

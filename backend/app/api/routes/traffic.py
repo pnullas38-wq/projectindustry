@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from app.core.security import get_current_user, UserInDB
+from app.core.security import get_current_user
+from app.models.user import User
 from app.services.city_simulator import simulator
 
 router = APIRouter(prefix="/traffic", tags=["Traffic Intelligence"])
@@ -12,13 +13,13 @@ class SignalOptimizeRequest(BaseModel):
 
 
 @router.get("/analytics")
-async def traffic_analytics(_: UserInDB = Depends(get_current_user)):
+async def traffic_analytics(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return snap["traffic"]
 
 
 @router.get("/forecast")
-async def traffic_forecast(_: UserInDB = Depends(get_current_user)):
+async def traffic_forecast(_: User = Depends(get_current_user)):
     return {
         "model": "LSTM-Traffic-v2",
         "horizon_minutes": 120,
@@ -32,7 +33,7 @@ async def traffic_forecast(_: UserInDB = Depends(get_current_user)):
 
 
 @router.post("/signals/optimize")
-async def optimize_signals(req: SignalOptimizeRequest, _: UserInDB = Depends(get_current_user)):
+async def optimize_signals(req: SignalOptimizeRequest, _: User = Depends(get_current_user)):
     return {
         "intersection_id": req.intersection_id,
         "strategy": req.strategy,
@@ -44,7 +45,7 @@ async def optimize_signals(req: SignalOptimizeRequest, _: UserInDB = Depends(get
 
 
 @router.get("/accidents")
-async def accident_detection(_: UserInDB = Depends(get_current_user)):
+async def accident_detection(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     accidents = [
         z for z in snap["traffic"]["zones"] if z.get("incidents", 0) > 0

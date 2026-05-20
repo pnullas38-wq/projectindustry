@@ -9,8 +9,11 @@ class Settings(BaseSettings):
     API_V1_PREFIX: str = "/api/v1"
     SECRET_KEY: str = "nexus-smart-city-secret-change-in-production"
     ALGORITHM: str = "HS256"
-    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 7
+    DEBUG: bool = False
 
+    DATABASE_URL: str = "sqlite+aiosqlite:///./data/nexus_auth.db"
     POSTGRES_URL: str = "postgresql+asyncpg://nexus:nexus@postgres:5432/nexus_city"
     MONGODB_URL: str = "mongodb://nexus:nexus@mongodb:27017"
     MONGODB_DB: str = "nexus_analytics"

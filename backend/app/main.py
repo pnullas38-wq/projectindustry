@@ -4,12 +4,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.api.routes import auth, city, traffic, crowd, environment, emergency, drone, ai, websocket
+from app.db.database import AsyncSessionLocal, init_db
+from app.services.user_seed import seed_default_users
 
 settings = get_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    await init_db()
+    async with AsyncSessionLocal() as session:
+        await seed_default_users(session)
+        await session.commit()
     yield
 
 

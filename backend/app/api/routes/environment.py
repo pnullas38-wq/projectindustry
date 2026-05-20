@@ -1,18 +1,19 @@
 from fastapi import APIRouter, Depends
-from app.core.security import get_current_user, UserInDB
+from app.core.security import get_current_user
+from app.models.user import User
 from app.services.city_simulator import simulator
 
 router = APIRouter(prefix="/environment", tags=["Environment Analytics"])
 
 
 @router.get("/aqi")
-async def aqi_monitoring(_: UserInDB = Depends(get_current_user)):
+async def aqi_monitoring(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return snap["environment"]
 
 
 @router.get("/forecast")
-async def pollution_forecast(_: UserInDB = Depends(get_current_user)):
+async def pollution_forecast(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return {
         "model": "LSTM-EnvForecast",

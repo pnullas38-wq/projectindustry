@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
-from app.core.security import get_current_user, UserInDB
+from app.core.security import get_current_user
+from app.models.user import User
 from app.services.city_simulator import simulator, ZONES, CAMERAS
 
 router = APIRouter(prefix="/city", tags=["Smart City"])
 
 
 @router.get("/snapshot")
-async def city_snapshot(_: UserInDB = Depends(get_current_user)):
+async def city_snapshot(_: User = Depends(get_current_user)):
     return simulator.generate_snapshot()
 
 
@@ -16,7 +17,7 @@ async def get_zones():
 
 
 @router.get("/cameras")
-async def get_cameras(_: UserInDB = Depends(get_current_user)):
+async def get_cameras(_: User = Depends(get_current_user)):
     return {"cameras": CAMERAS}
 
 

@@ -1,5 +1,6 @@
-import axios from 'axios'
-import { useAuthStore } from '../store/useAuthStore'
+import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios'
+import { useAuthStore, getAccessToken } from '../store/useAuthStore'
+import { refreshSession } from './auth'
 
 function resolveApiBase(): string {
   if (import.meta.env.VITE_API_URL) return import.meta.env.VITE_API_URL
@@ -7,19 +8,82 @@ function resolveApiBase(): string {
   return 'http://localhost:8000/api/v1'
 }
 
-const API_BASE = resolveApiBase()
-
-export const api = axios.create({ baseURL: API_BASE })
+export const api = axios.create({
+  baseURL: resolveApiBase(),
+  headers: { 'Content-Type': 'application/json' },
+})
 
 api.interceptors.request.use((config) => {
-  const token = useAuthStore.getState().token
+  const token = getAccessToken()
   if (token) config.headers.Authorization = `Bearer ${token}`
   return config
 })
 
-export async function login(username: string, password: string) {
-  const { data } = await api.post('/auth/login', { username, password })
-  return data
+let refreshPromise: Promise<string | null> | null = null
+
+async function refreshAccessToken(): Promise<string | null> {
+  const { refreshToken, clearSession, setSession, updateAccessToken } = useAuthStore.getState()
+  if (!refreshToken) {
+    clearSession()
+    return null
+  }
+  try {
+    const tokens = await refreshSession(refreshToken)
+    if (useAuthStore.getState().username) {
+      updateAccessToken(tokens.access_token, tokens.expires_in)
+      useAuthStore.setState({
+        refreshToken: tokens.refresh_token,
+        role: tokens.role,
+        fullName: tokens.full_name,
+      })
+    } else {
+      setSession(tokens)
+    }
+    return tokens.access_token
+  } catch {
+    clearSession()
+    return null
+  }
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  async (error: AxiosError) => {
+    const original = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
+    if (
+      error.response?.status !== 401 ||
+      !original ||
+      original._retry ||
+      original.url?.includes('/auth/login') ||
+      original.url?.includes('/auth/register') ||
+      original.url?.includes('/auth/refresh')
+    ) {
+      return Promise.reject(error)
+    }
+
+    original._retry = true
+    if (!refreshPromise) {
+      refreshPromise = refreshAccessToken().finally(() => {
+        refreshPromise = null
+      })
+    }
+
+    const newToken = await refreshPromise
+    if (!newToken) return Promise.reject(error)
+
+    original.headers.Authorization = `Bearer ${newToken}`
+    return api(original)
+  }
+)
+
+export function getApiErrorMessage(error: unknown): string {
+  if (axios.isAxiosError(error)) {
+    const detail = error.response?.data as { detail?: string | { msg: string }[] }
+    if (typeof detail?.detail === 'string') return detail.detail
+    if (Array.isArray(detail?.detail)) return detail.detail.map((d) => d.msg).join(', ')
+    if (error.response?.status === 401) return 'Invalid username or password'
+  }
+  return 'Something went wrong. Please try again.'
 }
 
 export async function chatAI(message: string) {

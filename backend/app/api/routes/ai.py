@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File
 from pydantic import BaseModel
-from app.core.security import get_current_user, UserInDB
+from app.core.security import get_current_user
+from app.models.user import User
 from app.services.city_simulator import simulator
 
 router = APIRouter(prefix="/ai", tags=["AI Analytics Engine"])
@@ -17,13 +18,13 @@ class ReportRequest(BaseModel):
 
 
 @router.get("/insights")
-async def ai_insights(_: UserInDB = Depends(get_current_user)):
+async def ai_insights(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return {"insights": snap["ai_insights"], "multi_agent_status": "active"}
 
 
 @router.post("/chat")
-async def ai_assistant(req: ChatRequest, _: UserInDB = Depends(get_current_user)):
+async def ai_assistant(req: ChatRequest, _: User = Depends(get_current_user)):
     responses = {
         "traffic": "Traffic AI: Downtown congestion at 52%. RL optimization applied to 3 intersections. Predicted peak in 45 min.",
         "emergency": "Emergency AI: 1 active incident. EMS dispatched. Drone Alpha providing aerial surveillance.",
@@ -45,7 +46,7 @@ async def ai_assistant(req: ChatRequest, _: UserInDB = Depends(get_current_user)
 
 
 @router.post("/reports/generate")
-async def generate_report(req: ReportRequest, _: UserInDB = Depends(get_current_user)):
+async def generate_report(req: ReportRequest, _: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return {
         "report_type": req.report_type,
@@ -59,7 +60,7 @@ async def generate_report(req: ReportRequest, _: UserInDB = Depends(get_current_
 
 
 @router.post("/vision/detect")
-async def vision_detect(_: UserInDB = Depends(get_current_user), file: UploadFile = File(None)):
+async def vision_detect(_: User = Depends(get_current_user), file: UploadFile = File(None)):
     return {
         "model": "YOLOv8-Nexus",
         "detections": [
@@ -73,7 +74,7 @@ async def vision_detect(_: UserInDB = Depends(get_current_user), file: UploadFil
 
 
 @router.get("/explain/{insight_id}")
-async def explainable_ai(insight_id: str, _: UserInDB = Depends(get_current_user)):
+async def explainable_ai(insight_id: str, _: User = Depends(get_current_user)):
     return {
         "insight_id": insight_id,
         "explanation": "Model weighted historical traffic (40%), live sensor fusion (35%), and weather API (25%).",

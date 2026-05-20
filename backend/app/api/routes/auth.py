@@ -1,56 +1,94 @@
-from datetime import timedelta
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import get_settings
-from app.core.security import DEMO_USERS, DEMO_PASSWORDS, create_access_token
+from app.core.security import get_current_user
+from app.db.database import get_db
+from app.models.user import User
+from app.schemas.auth import (
+    ChangePasswordRequest,
+    MessageResponse,
+    RefreshRequest,
+    TokenResponse,
+    UserLogin,
+    UserRegister,
+    UserResponse,
+)
+from app.services.auth_service import (
+    authenticate_user,
+    build_token_response,
+    hash_password,
+    register_user,
+    revoke_all_user_tokens,
+    revoke_refresh_token,
+    validate_refresh_token,
+    verify_password,
+)
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
-class LoginRequest(BaseModel):
-    username: str
-    password: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-    role: str
-    full_name: str
-
-
-class UserResponse(BaseModel):
-    username: str
-    email: str
-    role: str
-    full_name: str
+@router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
+async def register(body: UserRegister, db: AsyncSession = Depends(get_db)):
+    user = await register_user(db, body)
+    return await build_token_response(db, user)
 
 
 @router.post("/login", response_model=TokenResponse)
-async def login(body: LoginRequest):
-    user = DEMO_USERS.get(body.username)
-    expected = DEMO_PASSWORDS.get(body.username)
-    if not user or not expected or body.password != expected:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    settings = get_settings()
-    token = create_access_token(
-        {"sub": user.username, "role": user.role},
-        expires_delta=timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES),
-    )
-    return TokenResponse(
-        access_token=token,
-        role=user.role,
-        full_name=user.full_name,
-    )
+async def login_json(body: UserLogin, db: AsyncSession = Depends(get_db)):
+    user = await authenticate_user(db, body.username, body.password)
+    return await build_token_response(db, user)
 
 
-@router.get("/users/demo")
-async def demo_users():
-    return {
-        "users": [
-            {"username": "admin", "password": "admin123", "role": "admin"},
-            {"username": "operator", "password": "ops123", "role": "operator"},
-            {"username": "analyst", "password": "ai123", "role": "analyst"},
-        ]
-    }
+@router.post("/login/form", response_model=TokenResponse, include_in_schema=False)
+async def login_form(
+    form: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db),
+):
+    """OAuth2 password flow for Swagger / OpenAPI clients."""
+    user = await authenticate_user(db, form.username, form.password)
+    return await build_token_response(db, user)
+
+
+@router.post("/refresh", response_model=TokenResponse)
+async def refresh_tokens(body: RefreshRequest, db: AsyncSession = Depends(get_db)):
+    user = await validate_refresh_token(db, body.refresh_token)
+    await revoke_refresh_token(db, body.refresh_token)
+    return await build_token_response(db, user)
+
+
+@router.post("/logout", response_model=MessageResponse)
+async def logout(
+    body: RefreshRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await revoke_refresh_token(db, body.refresh_token)
+    return MessageResponse(message="Logged out successfully")
+
+
+@router.post("/logout/all", response_model=MessageResponse)
+async def logout_all_devices(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    await revoke_all_user_tokens(db, current_user.id)
+    return MessageResponse(message="Logged out from all devices")
+
+
+@router.get("/me", response_model=UserResponse)
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user
+
+
+@router.patch("/me/password", response_model=MessageResponse)
+async def change_password(
+    body: ChangePasswordRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if not verify_password(body.current_password, current_user.hashed_password):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Current password is incorrect")
+    current_user.hashed_password = hash_password(body.new_password)
+    await revoke_all_user_tokens(db, current_user.id)
+    return MessageResponse(message="Password updated. Please sign in again on other devices.")

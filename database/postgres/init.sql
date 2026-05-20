@@ -8,8 +8,21 @@ CREATE TABLE users (
     hashed_password TEXT NOT NULL,
     role VARCHAR(32) NOT NULL DEFAULT 'operator',
     full_name VARCHAR(128),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+CREATE TABLE refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) UNIQUE NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    revoked BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+CREATE INDEX idx_refresh_tokens_user ON refresh_tokens(user_id);
 
 CREATE TABLE city_zones (
     id VARCHAR(64) PRIMARY KEY,

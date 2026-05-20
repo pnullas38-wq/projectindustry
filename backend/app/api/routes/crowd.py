@@ -1,18 +1,19 @@
 from fastapi import APIRouter, Depends
-from app.core.security import get_current_user, UserInDB
+from app.core.security import get_current_user
+from app.models.user import User
 from app.services.city_simulator import simulator
 
 router = APIRouter(prefix="/crowd", tags=["Crowd Analytics"])
 
 
 @router.get("/density")
-async def crowd_density(_: UserInDB = Depends(get_current_user)):
+async def crowd_density(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     return snap["crowd"]
 
 
 @router.get("/suspicious")
-async def suspicious_activity(_: UserInDB = Depends(get_current_user)):
+async def suspicious_activity(_: User = Depends(get_current_user)):
     snap = simulator.generate_snapshot()
     alerts = [
         z for z in snap["crowd"]["zones"]

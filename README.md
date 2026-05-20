@@ -59,13 +59,19 @@ npm run dev
 
 Open http://localhost:5173
 
-### Demo Login
+### Authentication
+
+Production-style auth with **bcrypt** passwords, **JWT access tokens** (30 min), **refresh tokens** (7 days, stored hashed in DB), registration, and session restore.
 
 | User | Password | Role |
 |------|----------|------|
-| admin | admin123 | admin |
-| operator | ops123 | operator |
-| analyst | ai123 | analyst |
+| admin | Admin123! | admin |
+| operator | Ops12345! | operator |
+| analyst | Analyst123! | analyst |
+
+**API:** `POST /api/v1/auth/login` · `POST /api/v1/auth/register` · `POST /api/v1/auth/refresh` · `GET /api/v1/auth/me` · `POST /api/v1/auth/logout`
+
+Default database: SQLite at `backend/data/nexus_auth.db` (set `DATABASE_URL` for PostgreSQL).
 
 ### Deploy on Vercel (Multi-Service)
 

@@ -1,8 +1,18 @@
 import { useAuthStore } from './store/useAuthStore'
-import LoginPage from './components/LoginPage'
+import AuthPage from './components/auth/AuthPage'
+import AuthProvider from './components/auth/AuthProvider'
 import Dashboard from './components/Dashboard'
 
 export default function App() {
-  const token = useAuthStore((s) => s.token)
-  return token ? <Dashboard /> : <LoginPage />
+  const accessToken = useAuthStore((s) => s.accessToken)
+
+  if (!accessToken) {
+    return <AuthPage />
+  }
+
+  return (
+    <AuthProvider>
+      <Dashboard />
+    </AuthProvider>
+  )
 }
