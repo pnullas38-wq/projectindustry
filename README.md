@@ -124,3 +124,5 @@ Enable voice in the sidebar, then say: *traffic*, *emergency*, *environment*, *d
 ## License
 
 MIT — Built for academic & enterprise smart city demonstrations.
+
+# projectindustry
