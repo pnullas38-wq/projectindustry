@@ -11,6 +11,12 @@ async def city_snapshot(_: User = Depends(get_current_user)):
     return simulator.generate_snapshot()
 
 
+@router.get("/snapshot/public")
+async def city_snapshot_public():
+    """Unauthenticated snapshot for fallback when API routing or auth fails."""
+    return simulator.generate_snapshot()
+
+
 @router.get("/zones")
 async def get_zones():
     return {"zones": ZONES}

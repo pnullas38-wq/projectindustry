@@ -31,19 +31,17 @@ export default function Dashboard() {
             {connectionError ? 'CONNECTION FAILED' : 'INITIALIZING DIGITAL TWIN...'}
           </p>
           <p className="text-sm text-slate-500 mt-2">
-            {connectionError ?? (connected ? 'Syncing city telemetry...' : 'Connecting to NEXUS backend...')}
+            {connectionError ?? 'Loading city data via REST API...'}
           </p>
-          {connectionError && (
-            <button
-              type="button"
-              onClick={() => refresh()}
-              className="mt-6 px-6 py-2 rounded bg-blue-600/80 hud-text text-sm hover:bg-blue-500"
-            >
-              RETRY CONNECTION
-            </button>
-          )}
+          <button
+            type="button"
+            onClick={() => refresh()}
+            className="mt-6 px-6 py-2 rounded bg-blue-600/80 hud-text text-sm hover:bg-blue-500"
+          >
+            RETRY CONNECTION
+          </button>
           <p className="text-xs text-slate-600 mt-4">
-            On Vercel, WebSocket may be limited — data loads via REST API automatically.
+            Live data needs the backend service. If unavailable, demo mode loads automatically.
           </p>
         </div>
       </div>
