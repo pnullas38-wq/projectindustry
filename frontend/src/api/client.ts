@@ -78,10 +78,25 @@ api.interceptors.response.use(
 
 export function getApiErrorMessage(error: unknown): string {
   if (axios.isAxiosError(error)) {
-    const detail = error.response?.data as { detail?: string | { msg: string }[] }
-    if (typeof detail?.detail === 'string') return detail.detail
-    if (Array.isArray(detail?.detail)) return detail.detail.map((d) => d.msg).join(', ')
-    if (error.response?.status === 401) return 'Invalid username or password'
+    if (!error.response) {
+      return 'Cannot reach the server. Start the backend (port 8000) or check your deployment URL.'
+    }
+    const data = error.response.data as {
+      detail?: string | Array<{ msg?: string; loc?: (string | number)[] }>
+    }
+    if (typeof data?.detail === 'string') return data.detail
+    if (Array.isArray(data?.detail)) {
+      return data.detail
+        .map((d) => {
+          const field = d.loc?.filter((x) => x !== 'body').pop()
+          const msg = d.msg?.replace(/^Value error,\s*/i, '') ?? 'Invalid value'
+          return field ? `${field}: ${msg}` : msg
+        })
+        .join('; ')
+    }
+    if (error.response.status === 401) return 'Invalid username or password'
+    if (error.response.status === 422) return 'Please check your input and try again.'
+    if (error.response.status >= 500) return 'Server error. If deployed on Vercel, ensure the backend service is running.'
   }
   return 'Something went wrong. Please try again.'
 }

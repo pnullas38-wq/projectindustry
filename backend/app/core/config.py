@@ -1,5 +1,16 @@
-from pydantic_settings import BaseSettings
+import os
 from functools import lru_cache
+
+from pydantic_settings import BaseSettings
+
+
+def _default_database_url() -> str:
+    if os.getenv("DATABASE_URL"):
+        return os.getenv("DATABASE_URL", "")
+    # Vercel serverless: only /tmp is writable
+    if os.getenv("VERCEL") or os.getenv("VERCEL_ENV"):
+        return "sqlite+aiosqlite:////tmp/nexus_auth.db"
+    return "sqlite+aiosqlite:///./data/nexus_auth.db"
 
 
 class Settings(BaseSettings):
@@ -13,7 +24,7 @@ class Settings(BaseSettings):
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
     DEBUG: bool = False
 
-    DATABASE_URL: str = "sqlite+aiosqlite:///./data/nexus_auth.db"
+    DATABASE_URL: str = _default_database_url()
     POSTGRES_URL: str = "postgresql+asyncpg://nexus:nexus@postgres:5432/nexus_city"
     MONGODB_URL: str = "mongodb://nexus:nexus@mongodb:27017"
     MONGODB_DB: str = "nexus_analytics"
@@ -26,6 +37,7 @@ class Settings(BaseSettings):
         "http://localhost:5173",
         "http://localhost:3000",
         "http://127.0.0.1:5173",
+        "https://*.vercel.app",
     ]
 
     CITY_CENTER_LAT: float = 40.7128

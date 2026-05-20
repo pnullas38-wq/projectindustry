@@ -1,8 +1,11 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy.exc import IntegrityError
 
 from app.core.config import get_settings
+from app.core.exceptions import integrity_exception_handler, validation_exception_handler
 from app.api.routes import auth, city, traffic, crowd, environment, emergency, drone, ai, websocket
 from app.db.database import AsyncSessionLocal, init_db
 from app.services.user_seed import seed_default_users
@@ -28,9 +31,12 @@ app = FastAPI(
     redoc_url=settings.route("/api/redoc"),
 )
 
+app.add_exception_handler(RequestValidationError, validation_exception_handler)
+app.add_exception_handler(IntegrityError, integrity_exception_handler)
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.CORS_ORIGINS + ["*"],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,13 +1,19 @@
 import { useEffect, useState, type ReactNode } from 'react'
+import axios from 'axios'
 import { fetchCurrentUser } from '../../api/auth'
 import { useAuthStore } from '../../store/useAuthStore'
 
 export default function AuthProvider({ children }: { children: ReactNode }) {
-  const { isAuthenticated, accessToken, setSession, clearSession } = useAuthStore()
-  const [checking, setChecking] = useState(!!accessToken)
+  const { accessToken, username, clearSession } = useAuthStore()
+  const [checking, setChecking] = useState(!!accessToken && !username)
 
   useEffect(() => {
     if (!accessToken) {
+      setChecking(false)
+      return
+    }
+    // Session already populated from login/register response
+    if (username) {
       setChecking(false)
       return
     }
@@ -26,15 +32,18 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
             isAuthenticated: true,
           })
         }
-      } catch {
-        if (!cancelled) clearSession()
+      } catch (err) {
+        // Only clear session if token is invalid — not on network errors
+        if (!cancelled && axios.isAxiosError(err) && err.response?.status === 401) {
+          clearSession()
+        }
       } finally {
         if (!cancelled) setChecking(false)
       }
     })()
 
     return () => { cancelled = true }
-  }, [accessToken, clearSession])
+  }, [accessToken, username, clearSession])
 
   if (checking) {
     return (

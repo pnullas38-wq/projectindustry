@@ -4,6 +4,7 @@ import { Shield, Zap, UserPlus, LogIn, Eye, EyeOff } from 'lucide-react'
 import { loginUser, registerUser } from '../../api/auth'
 import { getApiErrorMessage } from '../../api/client'
 import { useAuthStore } from '../../store/useAuthStore'
+import { validateRegisterForm } from '../../utils/validation'
 
 type Mode = 'login' | 'register'
 
@@ -134,7 +135,7 @@ export default function AuthPage() {
                 onChange={setPassword}
                 show={showPassword}
                 onToggle={() => setShowPassword(!showPassword)}
-                hint="Min 8 chars, upper, lower, digit"
+                hint="Min 8 characters with uppercase, lowercase, and a number (e.g. Nexus123!)"
               />
               <Field
                 label="Confirm password"

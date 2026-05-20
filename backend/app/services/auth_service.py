@@ -6,6 +6,7 @@ import bcrypt
 from fastapi import HTTPException, status
 from jose import JWTError, jwt
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import get_settings
@@ -148,8 +149,14 @@ async def register_user(db: AsyncSession, data: UserRegister) -> User:
         full_name=data.full_name,
         is_active=True,
     )
-    db.add(user)
-    await db.flush()
+    try:
+        db.add(user)
+        await db.flush()
+    except IntegrityError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Username or email already exists",
+        ) from exc
     return user
 
 
